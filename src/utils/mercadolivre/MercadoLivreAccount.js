@@ -35,7 +35,7 @@ export class MercadoLivreAccountAPI {
           resolve(response.data);
         })
         .catch((error) => {
-          console.error("Error in refresh:", error);
+          // console.error("Error in refresh:", error);
           reject("Failed to refresh token with Mercado Livre API");
         });
     });

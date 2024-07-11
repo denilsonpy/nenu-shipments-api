@@ -4,10 +4,11 @@ import { MercadoLivreAccountAPI } from "../utils/mercadolivre/MercadoLivreAccoun
 
 export async function refreshAccountToken(req, res, next) {
   // Authentication logic
+  const email = req.user;
   // Retrieve accounts from database
   const accounts = await Account.find({
     email: {
-      $in: ["alessandro@nenu.com.br"],
+      $in: [email],
     },
   });
   // Refresh account tokens
@@ -32,5 +33,5 @@ export async function refreshAccountToken(req, res, next) {
     }
   }
 
-  next();
+  return next();
 }

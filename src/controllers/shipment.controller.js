@@ -34,7 +34,6 @@ class ShippingController {
       try {
         const shippingExists = await mercadolivreShippingApi.getByID(id);
         const receiver = shippingExists?.receiver_address;
-        console.log(JSON.stringify(shippingExists, null, 2));
         return res.json({
           shipping: {
             id: shippingExists.id,
