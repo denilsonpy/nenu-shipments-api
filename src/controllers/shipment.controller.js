@@ -126,14 +126,14 @@ class ShippingController {
     }
 
     if (daterange_from && daterange_to) {
-      query.created_at = {
+      query.created = {
         $gte: new Date(daterange_from),
         $lte: new Date(daterange_to),
       };
     } else if (daterange_from) {
-      query.createdAt = { $gte: new Date(daterange_from) };
+      query.created = { $gte: new Date(daterange_from) };
     } else if (daterange_to) {
-      query.createdAt = { $lte: new Date(daterange_to) };
+      query.created = { $lte: new Date(daterange_to) };
     }
 
     if (carrier) {
