@@ -84,7 +84,6 @@ class ShippingController {
           const receiver = shippingExists?.receiver_address;
           const shipping = {
             id: shippingExists.id,
-            // cpf_cnpj: shippingExists.,
             carrier,
             deliveryman,
             from_user_id: email,
@@ -99,7 +98,7 @@ class ShippingController {
             cep: receiver?.zip_code,
             store: account.name,
             url: `https://www.mercadolivre.com.br/vendas/${shippingExists?.order_id}/detalhe`,
-            created: shippingExists?.date_created,
+            // created: shippingExists?.date_created,
           };
           await Shipment.insertMany([shipping]);
         } catch (error) {
