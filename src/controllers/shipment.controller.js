@@ -1,5 +1,7 @@
+import { format } from "date-fns";
 import Account from "../models/account.model.js";
 import Shipment from "../models/shipment.model.js";
+import { sendEmail } from "../utils/mail.js";
 import { MercadoLivreAccountAPI } from "../utils/mercadolivre/MercadoLivreAccount.js";
 import { MercadoLivreShippingAPI } from "../utils/mercadolivre/MercadoLivreShipping.js";
 
@@ -73,6 +75,7 @@ class ShippingController {
       },
     });
 
+    const createdShipments = [];
     for (let shipment of shipments) {
       for (let account of accounts) {
         const token = account.access_token;
@@ -98,8 +101,8 @@ class ShippingController {
             cep: receiver?.zip_code,
             store: account.name,
             url: `https://www.mercadolivre.com.br/vendas/${shippingExists?.order_id}/detalhe`,
-            // created: shippingExists?.date_created,
           };
+          createdShipments.push(shipping);
           await Shipment.insertMany([shipping]);
         } catch (error) {
           continue;
@@ -107,6 +110,12 @@ class ShippingController {
       }
     }
 
+    sendEmail(
+      createdShipments.map((s) => ({
+        ...s,
+        created: format(new Date(), "dd/MM/yyyy HH:mm"),
+      }))
+    );
     return res.sendStatus(201);
   }
 
