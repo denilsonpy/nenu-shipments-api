@@ -69,7 +69,14 @@ export const sendEmail = async (shipments) => {
       text: body, // plain text body
       attachments: [
         {
-          filename: "shipments.csv",
+          filename: `${shipments[0].carrier
+            .toLowerCase()
+            .replace(/ /g, "_")}_${shipments[0].deliveryman
+            .toLowerCase()
+            .replace(/ /g, "_")}_${format(
+            new Date(),
+            "dd_MM_yyyy_HH'h'mm"
+          )}.csv`,
           path: csvFilePath,
         },
       ],
