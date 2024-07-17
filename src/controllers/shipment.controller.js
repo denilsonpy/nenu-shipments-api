@@ -16,6 +16,7 @@ class ShippingController {
         "Ricardo",
         "Pedro",
         "Lucas",
+        "Lalamove",
       ],
     });
   }
