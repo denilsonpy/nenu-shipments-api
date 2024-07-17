@@ -14,8 +14,7 @@ class ShippingController {
         "E-Express",
         "Flex Mania",
         "Ricardo",
-        "Pedro",
-        "Lucas",
+        "Particular",
         "Lalamove",
       ],
     });
