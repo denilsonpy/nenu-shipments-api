@@ -18,17 +18,22 @@ const createCsvFile = async (shipments, path) => {
       { id: "city", title: "Cidade" },
       { id: "district", title: "Bairro" },
       { id: "street", title: "Rua" },
-      { id: "address", title: "Endereço" },
-      { id: "complement", title: "Complemento" },
       { id: "number", title: "Número" },
+      { id: "complement", title: "Complemento" },
       { id: "cep", title: "CEP" },
       { id: "store", title: "Loja" },
-      { id: "url", title: "URl" },
+      { id: "url", title: "URL" },
+      { id: "tag", title: "Etiqueta" },
       { id: "created", title: "Data" },
     ],
   });
 
-  await csvWriter.writeRecords(shipments);
+  await csvWriter.writeRecords(
+    shipments.map((shipment) => ({
+      ...shipment,
+      tag: `https://manager.tracken.app.br/sistema2/public/index.php/imprimir/${shipment.id}`,
+    }))
+  );
   console.log("CSV file created successfully");
 };
 
