@@ -3,7 +3,7 @@ import { Schema, model } from "mongoose";
 const shipmentSchema = new Schema({
   id: { type: String },
   from_user_id: { type: String },
-  // cpf_cnpj: { type: String },
+  freight_price: { type: Number },
   carrier: { type: String },
   deliveryman: { type: String },
   name: { type: String },
