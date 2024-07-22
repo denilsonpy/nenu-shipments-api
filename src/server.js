@@ -10,6 +10,7 @@ import accountRouter from "./routes/account.router.js";
 // Middlewares
 import { refreshAccountToken } from "./middlewares/account.middleware.js";
 import { authenticated } from "./middlewares/auth.middleware.js";
+import carrierRouter from "./routes/carrier.router.js";
 
 // Connection with database
 mongoose.connect(config.mongoUri || "");
@@ -32,6 +33,7 @@ app.use(express.json());
 app.use("/auth", authRouter);
 app.use("/accounts", authenticated, accountRouter);
 app.use("/shipments", authenticated, refreshAccountToken, shipmentRouter);
+app.use("/carriers", authenticated, carrierRouter);
 
 // Handle other endpoints or invalid requests
 app.use((req, res) => {
