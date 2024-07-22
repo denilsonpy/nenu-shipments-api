@@ -2,24 +2,11 @@ import { format } from "date-fns";
 import Account from "../models/account.model.js";
 import Shipment from "../models/shipment.model.js";
 import { sendEmail } from "../utils/mail.js";
-import { MercadoLivreAccountAPI } from "../utils/mercadolivre/MercadoLivreAccount.js";
 import { MercadoLivreShippingAPI } from "../utils/mercadolivre/MercadoLivreShipping.js";
+import { checkFreightPrice } from "../utils/utils.js";
+import Carrier from "../models/carrier.model.js";
 
 class ShippingController {
-  static async getCarriers(req, res) {
-    return res.json({
-      carriers: [
-        "J3",
-        "MG Log",
-        "E-Express",
-        "Flex Mania",
-        "Ricardo",
-        "Particular",
-        "Lalamove",
-      ],
-    });
-  }
-
   static async getById(req, res) {
     const email = req.user;
     const { id } = req.params;
@@ -66,9 +53,21 @@ class ShippingController {
   static async create(req, res) {
     // Save Data on Database and Google Docs
     const email = req.user;
-    const carrier = req?.body?.carrier;
+    const carrierId = req?.body?.carrierId;
     const deliveryman = req?.body?.deliveryman;
     const shipments = req?.body?.shipments;
+
+    const carrier = await Carrier.findOne({
+      _id: carrierId,
+      user_email: email,
+    });
+    if (!carrier) {
+      return res.status(401).json({
+        error:
+          "Não foi possível encontrar a transportadora especificada. Verifique se o nome está correto ou se a transportadora está cadastrada no sistema.",
+      });
+    }
+
     const accounts = await Account.find({
       email: {
         $in: [email],
@@ -85,9 +84,14 @@ class ShippingController {
             shipment
           );
           const receiver = shippingExists?.receiver_address;
+          const rules = carrier.shipment_prices.map((rule) => rule._doc);
+          const freightPrice = checkFreightPrice(rules, {
+            state: receiver?.state?.name,
+            city: receiver?.city?.name,
+          });
           const shipping = {
             id: shippingExists.id,
-            carrier,
+            carrier: carrier.name,
             deliveryman,
             from_user_id: email,
             name: receiver?.receiver_name,
@@ -100,6 +104,7 @@ class ShippingController {
             number: receiver?.street_number,
             cep: receiver?.zip_code,
             store: account.name,
+            freight_price: freightPrice,
             url: `https://www.mercadolivre.com.br/vendas/${shippingExists?.order_id}/detalhe`,
           };
           createdShipments.push(shipping);
@@ -119,7 +124,7 @@ class ShippingController {
     return res.sendStatus(201);
   }
 
-  static async find(req, res) {
+  static async getAll(req, res) {
     const email = req.user;
 
     const { shipment_id, daterange_from, daterange_to, carrier, deliveryman } =

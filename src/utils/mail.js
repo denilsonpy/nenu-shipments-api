@@ -24,6 +24,7 @@ const createCsvFile = async (shipments, path) => {
       { id: "store", title: "Loja" },
       { id: "url", title: "URL" },
       { id: "tag", title: "Etiqueta" },
+      { id: "freight_price", title: "Valor do Frete" },
       { id: "created", title: "Data" },
     ],
   });
