@@ -140,14 +140,20 @@ class ShippingController {
     }
 
     if (daterange_from && daterange_to) {
+      const endOfDay = new Date(daterange_to);
+      endOfDay.setHours(23, 59, 59, 999);
+
       query.created = {
         $gte: new Date(daterange_from),
-        $lte: new Date(daterange_to),
+        $lte: endOfDay,
       };
     } else if (daterange_from) {
       query.created = { $gte: new Date(daterange_from) };
     } else if (daterange_to) {
-      query.created = { $lte: new Date(daterange_to) };
+      const endOfDay = new Date(daterange_to);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      query.created = { $lte: endOfDay };
     }
 
     if (carrier) {
