@@ -39,7 +39,7 @@ const createCsvFile = async (shipments, path) => {
 };
 
 // Function to send email with CSV attachment
-export const sendEmail = async (shipments) => {
+export const sendEmail = async (shipments, mail) => {
   // Create the CSV file
   const csvFilePath = path.join("./", `${randomUUID()}.csv`);
   await createCsvFile(shipments, csvFilePath);
@@ -61,10 +61,7 @@ export const sendEmail = async (shipments) => {
   let body = "Segue em anexo envios cadastrados";
 
   // Define the recipients
-  const recipients = [
-    "contato.denilsonsilva@gmail.com",
-    "alessandrovpic@uol.com.br",
-  ];
+  const recipients = [mail];
 
   // Send the email
   try {

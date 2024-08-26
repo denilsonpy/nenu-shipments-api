@@ -119,7 +119,8 @@ class ShippingController {
       createdShipments.map((s) => ({
         ...s,
         created: format(new Date(), "dd/MM/yyyy HH:mm"),
-      }))
+      })),
+      email
     );
     return res.sendStatus(201);
   }
