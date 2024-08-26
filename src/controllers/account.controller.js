@@ -31,46 +31,50 @@ class AccountController {
         .json({ error: "The code must be defined and should be a string!" });
     }
     // Retrieve account authentication details
-    const mercadoLivreAccountAPI = new MercadoLivreAccountAPI();
-    const authDetails = await mercadoLivreAccountAPI.authenticate(code);
-    // Retrieve account details
-    const accountDetails = await mercadoLivreAccountAPI.me(
-      authDetails.access_token
-    );
-    const companyName = accountDetails.company.brand_name || randomUUID();
-    // Check if account already exists
-    const accountExists = await Account.findOne({
-      seller_id: accountDetails.id,
-    });
-    if (accountExists) {
-      await Account.updateOne(
-        {
-          email,
-          seller_id: accountDetails.id,
-        },
-        {
-          email,
-          seller_id: accountDetails.id,
-          name: companyName,
-          access_token: authDetails.access_token,
-          refresh_token: authDetails.refresh_token,
-          expires_in: authDetails.expires_in,
-          updated: Date.now(),
-        }
+    try {
+      const mercadoLivreAccountAPI = new MercadoLivreAccountAPI();
+      const authDetails = await mercadoLivreAccountAPI.authenticate(code);
+      // Retrieve account details
+      const accountDetails = await mercadoLivreAccountAPI.me(
+        authDetails.access_token
       );
+      const companyName = accountDetails.company.brand_name || randomUUID();
+      // Check if account already exists
+      const accountExists = await Account.findOne({
+        seller_id: accountDetails.id,
+      });
+      if (accountExists) {
+        await Account.updateOne(
+          {
+            email,
+            seller_id: accountDetails.id,
+          },
+          {
+            email,
+            seller_id: accountDetails.id,
+            name: companyName,
+            access_token: authDetails.access_token,
+            refresh_token: authDetails.refresh_token,
+            expires_in: authDetails.expires_in,
+            updated: Date.now(),
+          }
+        );
+        return res.sendStatus(201);
+      }
+      // Create account object
+      const newAccount = new Account({
+        email,
+        seller_id: accountDetails.id,
+        name: companyName,
+        access_token: authDetails.access_token,
+        refresh_token: authDetails.refresh_token,
+        expires_in: authDetails.expires_in,
+      });
+      await newAccount.save();
       return res.sendStatus(201);
+    } catch (error) {
+      res.status(500).json({ error: "Internal Server Error" });
     }
-    // Create account object
-    const newAccount = new Account({
-      email,
-      seller_id: accountDetails.id,
-      name: companyName,
-      access_token: authDetails.access_token,
-      refresh_token: authDetails.refresh_token,
-      expires_in: authDetails.expires_in,
-    });
-    await newAccount.save();
-    return res.sendStatus(201);
   }
 
   static async removeAccount(req, res) {}
