@@ -77,7 +77,21 @@ class AccountController {
     }
   }
 
-  static async removeAccount(req, res) {}
+  static async removeAccount(req, res) {
+    const email = req.user;
+    const { id } = req.params;
+
+    const accountExists = await Account.findOne({
+      email: email,
+      _id: id,
+    });
+    if (!accountExists) {
+      return res.status(404).json({ error: "Account does not exist." });
+    }
+    await accountExists.deleteOne();
+
+    return res.sendStatus(200);
+  }
 }
 
 export default AccountController;
