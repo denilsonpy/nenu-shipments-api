@@ -11,7 +11,7 @@ class NotificationController {
           seller_id: user_id,
         });
 
-        const mercadoLivreNotificationAPI = MercadoLivreNotificationAPI(
+        const mercadoLivreNotificationAPI = new MercadoLivreNotificationAPI(
           account.access_token
         );
 
