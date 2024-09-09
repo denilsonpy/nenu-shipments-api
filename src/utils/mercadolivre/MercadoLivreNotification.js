@@ -1,15 +1,15 @@
 import axios from "axios";
 import config from "../../../config.js";
 
-export class MercadoLivreShippingAPI {
+export class MercadoLivreNotificationAPI {
   constructor(token) {
     this.token = token;
   }
 
-  async getByID(id) {
+  async getByResource(resource) {
     return new Promise((resolve, reject) => {
       axios
-        .get(`${config.meliAPiUrl}/shipments/${id}`, {
+        .get(`${config.meliAPiUrl}${resource}`, {
           headers: {
             Authorization: `Bearer ${this.token}`,
           },
@@ -18,8 +18,7 @@ export class MercadoLivreShippingAPI {
           resolve(response.data);
         })
         .catch((error) => {
-          // console.error("Error in getByID:", error);
-          reject("Failed to get shipment by id in Mercado Livre API");
+          reject("Failed to get resource in Mercado Livre API");
         });
     });
   }
