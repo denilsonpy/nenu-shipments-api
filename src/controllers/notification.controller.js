@@ -1,3 +1,4 @@
+import config from "../../config.js";
 import Account from "../models/account.model.js";
 import { MercadoLivreNotificationAPI } from "../utils/mercadolivre/MercadoLivreNotification.js";
 
@@ -16,14 +17,11 @@ class NotificationController {
             account.access_token
           );
 
+          console.log(`${config.meliAPiUrl}${resource}`);
           const data = await mercadoLivreNotificationAPI.getByResource(
             resource
           );
 
-          console.log({
-            account,
-            data,
-          });
           return res.sendStatus(200);
         }
         default:
