@@ -17,7 +17,7 @@ class NotificationController {
             account.access_token
           );
 
-          console.log(`${config.meliAPiUrl}${resource}`);
+          console.log(`${config.meliAPiUrl}${resource}`, account.name);
           const data = await mercadoLivreNotificationAPI.getByResource(
             resource
           );
