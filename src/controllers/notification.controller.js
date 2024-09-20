@@ -22,6 +22,12 @@ class NotificationController {
             resource
           );
 
+          const excludedStatuses = ["ready_to_ship", "shipped", "delivered"];
+
+          if (data.logistic_type === "self_service" && !excludedStatuses.includes(data.status)) {
+            console.log(data);
+          }
+
           const packageId = data.id;
 
           // Find the package by id and update it if exists, otherwise insert a new package
