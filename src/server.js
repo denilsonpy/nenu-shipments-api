@@ -51,6 +51,6 @@ app.use((err, req, res, next) => {
 // Main function to run tasks before starting the server
 app.listen(config.port, () => {
   console.log(
-    `🚀 Server running!\nReady to process questions like a boss. 💪🔥`
+    `🚀 Server running!\nReady to process shipments.`
   );
 });

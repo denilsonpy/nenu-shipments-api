@@ -75,11 +75,11 @@ export const sendEmail = async (shipments, mail) => {
           filename: `${shipments[0].carrier
             .toLowerCase()
             .replace(/ /g, "_")}_${shipments[0].deliveryman
-            .toLowerCase()
-            .replace(/ /g, "_")}_${format(
-            new Date(),
-            "dd_MM_yyyy_HH'h'mm"
-          )}.csv`,
+              .toLowerCase()
+              .replace(/ /g, "_")}_${format(
+                new Date(),
+                "dd_MM_yyyy_HH'h'mm"
+              )}.csv`,
           path: csvFilePath,
         },
       ],
@@ -96,5 +96,47 @@ export const sendEmail = async (shipments, mail) => {
         console.log("Arquivo CSV deletado com sucesso");
       }
     });
+  }
+};
+
+
+// Function to send email with CSV attachment
+export const sendMail = async (subject, body, mail) => {
+  // Create a transporter object using the default SMTP transport
+  let transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "ecommercepense@gmail.com",
+      pass: "qdei sbak rhjo moof", // Use environment variables for sensitive information
+    },
+  });
+
+  // Define the recipients
+  const recipients = [mail];
+
+  // Send the email
+  try {
+    await transporter.sendMail({
+      from: '"Shipments API" <ecommercepense@gmail.com>', // sender address
+      to: recipients.join(", "), // list of receivers
+      subject: subject, // Subject line
+      text: body, // plain text body
+      // attachments: [
+      //   {
+      //     filename: `${shipments[0].carrier
+      //       .toLowerCase()
+      //       .replace(/ /g, "_")}_${shipments[0].deliveryman
+      //         .toLowerCase()
+      //         .replace(/ /g, "_")}_${format(
+      //           new Date(),
+      //           "dd_MM_yyyy_HH'h'mm"
+      //         )}.csv`,
+      //     path: csvFilePath,
+      //   },
+      // ],
+    });
+    console.log("Email enviado com sucesso");
+  } catch (error) {
+    console.error("Erro ao enviar e-mail:", error);
   }
 };

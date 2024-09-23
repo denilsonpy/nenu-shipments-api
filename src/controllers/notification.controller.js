@@ -1,6 +1,7 @@
 import config from "../../config.js";
 import Account from "../models/account.model.js";
 import Package from "../models/package.model.js";
+import { sendEmail, sendMail } from "../utils/mail.js";
 import { MercadoLivreNotificationAPI } from "../utils/mercadolivre/MercadoLivreNotification.js";
 
 class NotificationController {
@@ -22,12 +23,6 @@ class NotificationController {
             resource
           );
 
-          const excludedStatuses = ["ready_to_ship", "shipped", "delivered"];
-
-          if (data.logistic_type === "self_service" && !excludedStatuses.includes(data.status)) {
-            console.log(data);
-          }
-
           const packageId = data.id;
 
           // Find the package by id and update it if exists, otherwise insert a new package
@@ -36,6 +31,12 @@ class NotificationController {
             { $set: { ...data, user_email: account.email } }, // Update the package with the new data
             { upsert: true, new: true } // Create the package if it doesn't exist (upsert)
           );
+
+          const excludedStatuses = ["ready_to_ship", "shipped", "delivered"];
+
+          if (data.logistic_type === "self_service" && !excludedStatuses.includes(data.status)) {
+            sendMail("Teste", `<pre>${JSON.stringify(data, null, 4)}</pre>`, "contato.denilsonsilva@gmail.com")
+          }
 
           return res.sendStatus(200);
         }
