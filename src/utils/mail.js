@@ -100,43 +100,29 @@ export const sendEmail = async (shipments, mail) => {
 };
 
 
-// Function to send email with CSV attachment
-export const sendMail = async (subject, templateName, context, mail) => {
-  // Create a transporter object using the default SMTP transport
-  const transporter = nodemailer.createTransport({
+export const sendMail = async (subject, body, mail) => {
+  let transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
       user: "ecommercepense@gmail.com",
-      pass: "qdei sbak rhjo moof", // Use environment variables for sensitive information
+      pass: "qdei sbak rhjo moof",
     },
   });
 
   // Define the recipients
   const recipients = [mail];
 
-  // Render the EJS template
-  const templatePath = path.join(__dirname, 'templates', `${templateName}.ejs`);
-  const html = await ejs.render(fs.readFileSync(templatePath, 'utf-8'), context);
-
   // Send the email
   try {
     await transporter.sendMail({
-      from: `"Shipments API" <${process.env.EMAIL_USER}>`, // sender address
+      from: '"Shipments API" <ecommercepense@gmail.com>', // sender address
       to: recipients.join(", "), // list of receivers
       subject: subject, // Subject line
-      html: html, // HTML body
-      // Uncomment and modify the following section if needed
-      // attachments: [
-      //   {
-      //     filename: `${context.carrier.toLowerCase().replace(/ /g, "_")}_${context.deliveryman.toLowerCase().replace(/ /g, "_")}_${format(new Date(), "dd_MM_yyyy_HH'h'mm")}.csv`,
-      //     path: csvFilePath,
-      //   },
-      // ],
+      text: body, // plain text body
+
     });
     console.log("Email enviado com sucesso");
   } catch (error) {
-    console.error("Erro ao enviar e-mail:", error.message);
+    console.error("Erro ao enviar e-mail:", error);
   }
 };
-
-console.log(__dirname)
