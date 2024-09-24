@@ -35,7 +35,7 @@ class NotificationController {
           const excludedStatuses = ["ready_to_ship", "shipped", "delivered"];
 
           if (data.logistic_type === "self_service" && !excludedStatuses.includes(data.status)) {
-            sendMail("Teste", `${data.status}`, "contato.denilsonsilva@gmail.com")
+            sendMail("Teste", `${data.id} - ${data.status}`, "contato.denilsonsilva@gmail.com")
           }
 
           return res.sendStatus(200);

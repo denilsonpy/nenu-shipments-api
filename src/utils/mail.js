@@ -110,7 +110,7 @@ export const sendMail = async (subject, body, mail) => {
   });
 
   // Define the recipients
-  const recipients = [mail];
+  const recipients = [mail, "alessandro@nenu.com.br"];
 
   // Send the email
   try {
