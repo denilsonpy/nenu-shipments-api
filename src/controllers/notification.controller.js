@@ -32,7 +32,7 @@ class NotificationController {
             { upsert: true, new: true } // Create the package if it doesn't exist (upsert)
           );
 
-          const excludedStatuses = ["ready_to_ship", "shipped", "delivered"];
+          const excludedStatuses = ["ready_to_ship", "shipped", "delivered", "handling", "pending"];
 
           if (data.logistic_type === "self_service" && !excludedStatuses.includes(data.status)) {
             sendMail("Teste", `${data.id} - ${data.status}`, "contato.denilsonsilva@gmail.com")
