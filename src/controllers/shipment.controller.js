@@ -5,6 +5,7 @@ import { sendEmail } from "../utils/mail.js";
 import { MercadoLivreShippingAPI } from "../utils/mercadolivre/MercadoLivreShipping.js";
 import { checkFreightPrice } from "../utils/utils.js";
 import Carrier from "../models/carrier.model.js";
+import Appointment from "../models/appointment.model.js";
 
 class ShippingController {
   static async getById(req, res) {
@@ -108,6 +109,26 @@ class ShippingController {
             url: `https://www.mercadolivre.com.br/vendas/${shippingExists?.order_id}/detalhe`,
           };
           createdShipments.push(shipping);
+
+          // Remove shipment from appointments if it has been sent
+          const appointments = await Appointment.find();
+          for (let appointment of appointments) {
+            if (appointment.shipments.includes(shippingExists.id)) {
+              // Remove the shipment ID from the appointment
+              appointment.shipments = appointment.shipments.filter(
+                (shipmentId) => shipmentId !== shippingExists.id
+              );
+
+              // If the shipments list is now empty, delete the appointment
+              if (appointment.shipments.length === 0) {
+                await Appointment.findByIdAndDelete(appointment._id);
+              } else {
+                // Otherwise, update the appointment
+                await appointment.save();
+              }
+            }
+          }
+
           await Shipment.insertMany([shipping]);
         } catch (error) {
           continue;
