@@ -1,8 +1,10 @@
 import config from "../../config.js";
 import Account from "../models/account.model.js";
+import Label from "../models/label.model.js";
 import Package from "../models/package.model.js";
 import { sendEmail, sendMail } from "../utils/mail.js";
 import { MercadoLivreNotificationAPI } from "../utils/mercadolivre/MercadoLivreNotification.js";
+import { MercadoLivreShippingAPI } from "../utils/mercadolivre/MercadoLivreShipping.js";
 
 class NotificationController {
   static async notify(req, res) {
@@ -16,6 +18,9 @@ class NotificationController {
           });
 
           const mercadoLivreNotificationAPI = new MercadoLivreNotificationAPI(
+            account.access_token
+          );
+          const mercadoLivreShippingAPI = new MercadoLivreShippingAPI(
             account.access_token
           );
 
@@ -32,10 +37,35 @@ class NotificationController {
             { upsert: true, new: true } // Create the package if it doesn't exist (upsert)
           );
 
-          const excludedStatuses = ["ready_to_ship", "shipped", "delivered", "handling", "pending"];
+          // Save label
+          if (data.status === "ready_to_ship" && data.substatus === "printed") {
+            const labelContent = await mercadoLivreShippingAPI.getZplByID(
+              packageId
+            );
+            const label = new Label({
+              packageId,
+              label: labelContent,
+            });
+            await label.save();
+          }
 
-          if (data.logistic_type === "self_service" && !excludedStatuses.includes(data.status)) {
-            sendMail("Teste", `${data.id} - ${data.status}`, "contato.denilsonsilva@gmail.com")
+          const excludedStatuses = [
+            "ready_to_ship",
+            "shipped",
+            "delivered",
+            "handling",
+            "pending",
+          ];
+
+          if (
+            data.logistic_type === "self_service" &&
+            !excludedStatuses.includes(data.status)
+          ) {
+            sendMail(
+              "Teste",
+              `${data.id} - ${data.status}`,
+              "contato.denilsonsilva@gmail.com"
+            );
           }
 
           return res.sendStatus(200);
@@ -50,5 +80,3 @@ class NotificationController {
 }
 
 export default NotificationController;
-
-
