@@ -5,5 +5,6 @@ const appointmentRouter = Router();
 
 appointmentRouter.get("/", AppointmentController.getAll);
 appointmentRouter.post("/", AppointmentController.create);
+appointmentRouter.delete("/:id", AppointmentController.delete);
 
 export default appointmentRouter;
