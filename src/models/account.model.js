@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const accountSchema = new mongoose.Schema({
   email: String,
@@ -7,6 +7,7 @@ const accountSchema = new mongoose.Schema({
   access_token: String,
   refresh_token: String,
   expires_in: Number,
+  organization_id: { type: Schema.Types.ObjectId, ref: "Organization" },
   created: { type: Date, default: Date.now },
   updated: { type: Date, default: Date.now },
 });

@@ -6,29 +6,40 @@ import { carrierSchema } from "../validators/carrier.validator.js";
 
 class CarrierController {
   static async getAll(req, res) {
-    const email = req.user;
+    const user = req.user;
     // Get all carriers linked to the user
     const carriers = await Carrier.find({
-      user_email: email,
+      organization_id: user.organization,
     });
     return res.json({ carriers });
   }
 
+  static async getById(req, res) {
+    const user = req.user;
+    const { id } = req.params;
+    // Check if carrier exists
+    const carrier = await Carrier.findOne({
+      _id: id,
+      organization_id: user.organization,
+    });
+    return res.json(carrier);
+  }
+
   static async create(req, res) {
-    const email = req.user;
-    const { name, shipmentPrices } = req.body;
+    const user = req.user;
+    const { name, shipment_prices } = req.body;
     try {
       // Validate fields
       await carrierSchema.validate(
         {
           name,
-          shipmentPrices,
+          shipment_prices,
         },
         { strict: true }
       );
       // Check if carrier already exists
       const carrierExists = await Carrier.findOne({
-        user_email: email,
+        organization_id: user.organization,
         name,
       });
       if (carrierExists) {
@@ -40,13 +51,8 @@ class CarrierController {
       // Create carrier
       const carrier = await Carrier.create({
         name,
-        user_email: email,
-        shipment_prices: shipmentPrices.map((s) => ({
-          region_type: s.regionType,
-          city: s.city,
-          state: s.state,
-          price: s.price,
-        })),
+        organization_id: user.organization,
+        shipment_prices,
       });
       await carrier.save();
       return res.json(carrier);
@@ -64,21 +70,21 @@ class CarrierController {
   }
 
   static async updateById(req, res) {
-    const email = req.user;
+    const user = req.user;
     const { id } = req.params;
-    const { name, shipmentPrices } = req.body;
+    const { name, shipment_prices } = req.body;
     try {
       // Validate fields
       await carrierSchema.validate(
         {
           name,
-          shipmentPrices,
+          shipment_prices,
         },
         { strict: true }
       );
       // Check if new carrier name already exists
       const nameExists = await Carrier.findOne({
-        user_email: email,
+        organization_id: user.organization,
         name,
       });
       if (nameExists && nameExists._id != id) {
@@ -91,11 +97,11 @@ class CarrierController {
       const updatedCarrier = await Carrier.findOneAndUpdate(
         {
           _id: id,
-          user_email: email,
+          organization_id: user.organization,
         },
         {
           name,
-          shipment_prices: shipmentPrices.map((s) => ({
+          shipment_prices: shipment_prices.map((s) => ({
             region_type: s.regionType,
             city: s.city,
             state: s.state,
@@ -120,11 +126,11 @@ class CarrierController {
   }
 
   static async deleteById(req, res) {
-    const email = req.user;
+    const user = req.user;
     const { id } = req.params;
     // Check if carrier exists
     const carrierExists = await Carrier.findOne({
-      user_email: email,
+      organization_id: user.organization,
       _id: id,
     });
     if (!carrierExists) return res.sendStatus(404);

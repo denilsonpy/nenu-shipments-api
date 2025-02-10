@@ -7,7 +7,7 @@ class AccountController {
     const email = req.user;
     // Retrieve all accounts linked to the user
     const accounts = await Account.find(
-      { email },
+      { organization_id },
       {
         email: 0,
         access_token: 0,

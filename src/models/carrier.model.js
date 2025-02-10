@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const ShipmentPriceSchema = new mongoose.Schema({
   region_type: String,
@@ -10,7 +10,8 @@ const ShipmentPriceSchema = new mongoose.Schema({
 const carrierSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    user_email: { type: String, required: true },
+    // user_email: { type: String, required: true },
+    organization_id: { type: Schema.Types.ObjectId, ref: "Organization" },
     shipment_prices: [ShipmentPriceSchema],
     created: { type: Date, default: Date.now },
     updated: { type: Date, default: Date.now },

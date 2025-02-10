@@ -2,7 +2,6 @@ import { Schema, model } from "mongoose";
 
 const shipmentSchema = new Schema({
   id: { type: String },
-  from_user_id: { type: String },
   freight_price: { type: Number },
   carrier: { type: String },
   deliveryman: { type: String },
@@ -18,6 +17,7 @@ const shipmentSchema = new Schema({
   store: { type: String },
   url: { type: String },
   created: { type: Date, default: Date.now },
+  organization_id: { type: Schema.Types.ObjectId, ref: "Organization" },
 });
 
 const Shipment = model("Shipment", shipmentSchema);

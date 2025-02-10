@@ -5,11 +5,11 @@ export const carrierSchema = yup.object().shape({
     .string()
     .required("O campo nome é obrigatório.")
     .min(1, "O nome deve ter pelo menos 1 caracteres."),
-  shipmentPrices: yup
+  shipment_prices: yup
     .array()
     .of(
       yup.object().shape({
-        regionType: yup
+        region_type: yup
           .string()
           .oneOf(["city", "state", "all"], "Tipo de região inválido")
           .required("Tipo de região é obrigatório"),

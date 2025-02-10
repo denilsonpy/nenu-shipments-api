@@ -1,10 +1,15 @@
 import mongoose from "mongoose";
-import moment from "moment";
+import Organization from "./src/models/organization.model.js";
+import User from "./src/models/user.model.js";
 import config from "./config.js";
 import Shipment from "./src/models/shipment.model.js";
 import Package from "./src/models/package.model.js";
+import Label from "./src/models/label.model.js";
+import Carrier from "./src/models/carrier.model.js";
 import Account from "./src/models/account.model.js";
+import Appointment from "./src/models/appointment.model.js";
 
+// Connection with database
 mongoose.connect(config.mongoUri || "");
 const database = mongoose.connection;
 
@@ -16,73 +21,75 @@ database.once("connected", () => {
   console.log("Mongo database connected!");
 });
 
-const today = moment().startOf("day").toISOString();
-const tomorrow = moment().add(1, "day").startOf("day").toISOString();
+// // Função para criar uma organização
+// async function createOrganization(name, description) {
+//   const organization = new Organization({ name, description });
+//   await organization.save();
+//   return organization;
+// }
 
-// Consulta para filtrar envios "Flex" da data de hoje
-const packages = await Package.find({
-  mode: "me2",
-  logistic_type: "self_service", // Filtra envios do tipo Flex
-  "status_history.date_shipped": { $gte: today, $lt: tomorrow }, // Filtra pela data de hoje
-});
+// // Função para associar um usuário a uma organização
+// async function addUserToOrganization(userId, organizationId) {
+//   const user = await User.findById(userId);
+//   const organization = await Organization.findById(organizationId);
 
-const accounts = await Account.find();
-const packageIds = packages.map((p) => ({
-  id: p.id,
-  name: p.receiver_address.receiver_name,
-  status: p.status,
-  //   state: p.receiver_address.state?.name,
-  //   city: p.receiver_address.city?.name,
-  //   district: p.receiver_address.neighborhood?.name,
-  //   street: p.receiver_address.street_name,
-  //   address: p.receiver_address.address_line,
-  //   complement: p.receiver_address.comment,
-  //   number: p.receiver_address.street_number,
-  //   cep: p.receiver_address.zip_code,
-  store: accounts.find((a) => a.seller_id === p.sender_id).name,
-  url: `https://www.mercadolivre.com.br/vendas/${p?.order_id}/detalhe`,
-  shipped: p.status_history.date_shipped
-    ? moment(p.status_history.date_shipped).format("DD/MM/YYYY")
-    : "",
-  delivered: p.status_history.date_delivered
-    ? moment(p.status_history.date_delivered).format("DD/MM/YYYY")
-    : "",
-}));
+//   if (!user || !organization) {
+//     throw new Error("Usuário ou organização não encontrado");
+//   }
 
-// Consulta para filtrar envios "Flex" da data de hoje
-const shipments = await Shipment.find({
-  created: { $gte: today, $lt: tomorrow },
-});
+//   // Adiciona o usuário à organização
+//   organization.users.push(user._id);
+//   await organization.save();
 
-const shipmentsIds = shipments.map((s) => s.id);
+//   // Adiciona a organização ao usuário
+//   user.organizations.push(organization._id);
+//   await user.save();
+// }
 
-let notIn = [];
-for (let packageId of packageIds) {
-  if (!shipmentsIds.includes(packageId.id)) {
-    notIn.push(packageId);
+// Exemplo de uso
+(async () => {
+  try {
+    const organizationId = new mongoose.Types.ObjectId(
+      "679c35863b6804f627d8768a"
+    );
+    await Shipment.updateMany(
+      { from_user_id: "alessandro@nenu.com.br" }, // Filtro vazio para aplicar a todos os documentos
+      {
+        $set: {
+          organization_id: organizationId,
+        },
+      } // Adiciona organization_id como ObjectId
+    );
+    await Label.updateMany(
+      {}, // Filtro vazio para aplicar a todos os documentos
+      {
+        $set: {
+          organization_id: organizationId,
+        },
+      } // Adiciona organization_id como ObjectId
+    );
+    await Package.updateMany(
+      { user_email: "alessandro@nenu.com.br" }, // Filtro vazio para aplicar a todos os documentos
+      {
+        $set: {
+          organization_id: organizationId,
+        },
+      } // Adiciona organization_id como ObjectId
+    );
+    // // Cria um usuário
+    // const user = await User.findOne({ email: "alessandro@nenu.com.br" });
+    // console.log(user);
+
+    // // Cria uma organização
+    // const organization = await Organization.findById(
+    //   "679c35863b6804f627d8768a"
+    // );
+    // console.log("Organização criada:", organization);
+
+    // Associa o usuário à organização
+    // await addUserToOrganization(user._id, organization._id);
+    console.log("Sucesso!");
+  } catch (error) {
+    console.error("Erro:", error);
   }
-}
-
-function convertToCSV(objArray) {
-  const array = Array.isArray(objArray) ? objArray : [objArray];
-  const header = Object.keys(array[0]);
-  const csv = array.map((row) =>
-    header
-      .map((fieldName) =>
-        JSON.stringify(row[fieldName], (key, value) =>
-          value === null ? "" : value
-        )
-      )
-      .join(",")
-  );
-  csv.unshift(header.join(",")); // Adiciona o cabeçalho ao início
-  return csv.join("\r\n");
-}
-
-// Convertendo os dados para CSV
-const csvData = convertToCSV(packageIds);
-
-// Exibindo o CSV gerado no console (ou você pode salvar em um arquivo)
-console.log(csvData);
-
-process.exit();
+})();

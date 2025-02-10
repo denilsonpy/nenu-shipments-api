@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const packageSchema = new mongoose.Schema(
   {
@@ -6,6 +6,7 @@ const packageSchema = new mongoose.Schema(
       type: String, // Change this to `Number` if your IDs are numeric
       required: true,
     },
+    organization_id: { type: Schema.Types.ObjectId, ref: "Organization" },
   },
   { strict: false, versionKey: false }
 );

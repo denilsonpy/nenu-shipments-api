@@ -6,61 +6,53 @@ import { MercadoLivreShippingAPI } from "../utils/mercadolivre/MercadoLivreShipp
 import { checkFreightPrice } from "../utils/utils.js";
 import Carrier from "../models/carrier.model.js";
 import Appointment from "../models/appointment.model.js";
+import Package from "../models/package.model.js";
 
 class ShippingController {
   static async getById(req, res) {
-    const email = req.user;
-    const { id } = req.params;
+    try {
+      const user = req.user;
+      const { id } = req.params;
 
-    const accounts = await Account.find({
-      email: {
-        $in: [email],
-      },
-    });
+      const pack = await Package.findOne({
+        _id: id,
+        organization_id: user.organization,
+      });
+      const account = await Account.findOne({
+        seller_id: pack.sender_id,
+      });
 
-    for (let account of accounts) {
-      const token = account.access_token;
-      const mercadolivreShippingApi = new MercadoLivreShippingAPI(token);
-      try {
-        const shippingExists = await mercadolivreShippingApi.getByID(id);
-        const receiver = shippingExists?.receiver_address;
-        return res.json({
-          shipping: {
-            id: shippingExists.id,
-            // cpf_cnpj: shippingExists.,
-            name: receiver?.receiver_name,
-            state: receiver?.state?.name,
-            city: receiver?.city?.name,
-            district: receiver?.neighborhood?.name,
-            street: receiver?.street_name,
-            address: receiver?.address_line,
-            complement: receiver?.comment,
-            number: receiver?.street_number,
-            cep: receiver?.zip_code,
-            store: account.name,
-            url: `https://www.mercadolivre.com.br/vendas/${shippingExists?.order_id}/detalhe`,
-            created: shippingExists?.date_created,
-          },
-        });
-      } catch (error) {
-        console.log(error);
-        continue;
-      }
+      return res.json({
+        id: pack._id,
+        name: pack.receiver_address?.receiver_name,
+        state: pack.receiver_address?.state?.name,
+        city: pack.receiver_address?.city?.name,
+        district: pack.receiver_address?.neighborhood?.name,
+        street: pack.receiver_address?.street_name,
+        address: pack.receiver_address?.address_line,
+        complement: pack.receiver_address?.comment,
+        number: pack.receiver_address?.street_number,
+        cep: pack.receiver_address?.zip_code,
+        store: account.name,
+        url: `https://www.mercadolivre.com.br/vendas/${pack?.order_id}/detalhe`,
+        created: pack?.date_created,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.sendStatus(500);
     }
-
-    return res.sendStatus(404);
   }
 
   static async create(req, res) {
     // Save Data on Database and Google Docs
-    const email = req.user;
-    const carrierId = req?.body?.carrierId;
+    const user = req.user;
+    const carrierId = req?.body?.carrier_id;
     const deliveryman = req?.body?.deliveryman;
     const shipments = req?.body?.shipments;
 
     const carrier = await Carrier.findOne({
       _id: carrierId,
-      user_email: email,
+      organization_id: user.organization,
     });
     if (!carrier) {
       return res.status(401).json({
@@ -70,90 +62,95 @@ class ShippingController {
     }
 
     const accounts = await Account.find({
-      email: {
-        $in: [email],
+      organization_id: {
+        $in: [user.organization],
       },
     });
 
-    const createdShipments = [];
-    for (let shipment of shipments) {
-      for (let account of accounts) {
-        const token = account.access_token;
-        const mercadolivreShippingApi = new MercadoLivreShippingAPI(token);
-        try {
-          const shippingExists = await mercadolivreShippingApi.getByID(
-            shipment
+    const appointments = await Appointment.find();
+    async function removeShipmentFromAppointments(appointments, shipmentId) {
+      for (const appointment of appointments) {
+        if (appointment.shipments.includes(shipmentId)) {
+          // Remove o shipment ID do appointment
+          appointment.shipments = appointment.shipments.filter(
+            (id) => id !== shipmentId
           );
-          const receiver = shippingExists?.receiver_address;
-          const rules = carrier.shipment_prices.map((rule) => rule._doc);
-          const freightPrice = checkFreightPrice(rules, {
-            state: receiver?.state?.name,
-            city: receiver?.city?.name,
-          });
-          const shipping = {
-            id: shippingExists.id,
-            carrier: carrier.name,
-            deliveryman,
-            from_user_id: email,
-            name: receiver?.receiver_name,
-            state: receiver?.state?.name,
-            city: receiver?.city?.name,
-            district: receiver?.neighborhood?.name,
-            street: receiver?.street_name,
-            address: receiver?.address_line,
-            complement: receiver?.comment,
-            number: receiver?.street_number,
-            cep: receiver?.zip_code,
-            store: account.name,
-            freight_price: freightPrice,
-            url: `https://www.mercadolivre.com.br/vendas/${shippingExists?.order_id}/detalhe`,
-          };
-          createdShipments.push(shipping);
 
-          // Remove shipment from appointments if it has been sent
-          const appointments = await Appointment.find();
-          for (let appointment of appointments) {
-            if (appointment.shipments.includes(shippingExists.id)) {
-              // Remove the shipment ID from the appointment
-              appointment.shipments = appointment.shipments.filter(
-                (shipmentId) => shipmentId !== shippingExists.id
-              );
-
-              // If the shipments list is now empty, delete the appointment
-              if (appointment.shipments.length === 0) {
-                await Appointment.findByIdAndDelete(appointment._id);
-              } else {
-                // Otherwise, update the appointment
-                await appointment.save();
-              }
-            }
+          // Se a lista de shipments estiver vazia, deleta o appointment
+          if (appointment.shipments.length === 0) {
+            await Appointment.findByIdAndDelete(appointment._id);
+          } else {
+            // Caso contrário, atualiza o appointment
+            await appointment.save();
           }
-
-          await Shipment.insertMany([shipping]);
-        } catch (error) {
-          continue;
         }
       }
     }
 
-    sendEmail(
-      createdShipments.map((s) => ({
-        ...s,
-        created: format(new Date(), "dd/MM/yyyy HH:mm"),
-      })),
-      email
-    );
+    const createdShipments = [];
+    for (let i = 0; i < shipments.length; i++) {
+      let shipmentId = shipments[i];
+      const shippingExists = await Package.findOne({
+        _id: String(shipmentId),
+        organization_id: user.organization,
+      });
+
+      if (!shippingExists) continue;
+
+      const receiver = shippingExists.receiver_address;
+      const rules = carrier.shipment_prices.map((rule) => rule._doc);
+      const freightPrice = checkFreightPrice(rules, {
+        state: receiver?.state?.name,
+        city: receiver?.city?.name,
+      });
+
+      const account = accounts.find(
+        (a) => a.seller_id === shippingExists.sender_id
+      );
+      createdShipments.push({
+        id: shippingExists.id,
+        carrier: carrier.name,
+        deliveryman,
+        organization_id: user.organization,
+        name: receiver?.receiver_name,
+        state: receiver?.state?.name,
+        city: receiver?.city?.name,
+        district: receiver?.neighborhood?.name,
+        street: receiver?.street_name,
+        address: receiver?.address_line,
+        complement: receiver?.comment,
+        number: receiver?.street_number,
+        cep: receiver?.zip_code,
+        store: account.name,
+        freight_price: freightPrice,
+        url: `https://www.mercadolivre.com.br/vendas/${shippingExists?.order_id}/detalhe`,
+      });
+
+      // Remove shipment from appointments if it has been sent
+      await removeShipmentFromAppointments(appointments, shippingExists.id);
+    }
+
+    await Shipment.insertMany(createdShipments);
+
+    // sendEmail(
+    //   createdShipments.map((s) => ({
+    //     ...s,
+    //     created: format(new Date(), "dd/MM/yyyy HH:mm"),
+    //   })),
+    //   user.email
+    // );
+
     return res.sendStatus(201);
   }
 
   static async getAll(req, res) {
-    const email = req.user;
+    const user = req.user;
 
     const { shipment_id, daterange_from, daterange_to, carrier, deliveryman } =
       req.query;
 
     const query = {
-      from_user_id: { $in: [email] },
+      organization_id: { $in: [user.organization] },
     };
 
     // Add filters based on the presence of query parameters
@@ -162,18 +159,25 @@ class ShippingController {
     }
 
     if (daterange_from && daterange_to) {
-      const endOfDay = new Date(daterange_to);
-      endOfDay.setHours(23, 59, 59, 999);
+      // Converte as strings para objetos Date
+      const startDate = new Date(daterange_from);
+      const endDate = new Date(daterange_to);
+      // Ajusta o final do dia para 23:59:59.999
+      const endOfDay = new Date(endDate);
+      endOfDay.setUTCHours(23, 59, 59, 999);
 
+      // Define o filtro de data
       query.created = {
-        $gte: new Date(daterange_from),
-        $lte: endOfDay,
+        $gte: startDate, // Data inicial (início do dia)
+        $lte: endOfDay, // Data final (final do dia)
       };
     } else if (daterange_from) {
+      // Apenas data inicial
       query.created = { $gte: new Date(daterange_from) };
     } else if (daterange_to) {
+      // Apenas data final
       const endOfDay = new Date(daterange_to);
-      endOfDay.setHours(23, 59, 59, 999);
+      endOfDay.setUTCHours(23, 59, 59, 999);
 
       query.created = { $lte: endOfDay };
     }

@@ -11,46 +11,9 @@ const jwtTokenExpiration = config.jwtTokenExpiration;
 const jwtSecretKey = config.jwtSecretKey;
 
 class AuthController {
-  static async register(req, res) {
-    // Get email and password
-    const { name, email, password } = req.body;
+  // static async register(req, res) {
 
-    if (!email || !password || !name) {
-      return res.status(400).json({ error: "Invalid data." });
-    }
-
-    // User already exists?
-    const userExists = await User.findOne({
-      email,
-    });
-    if (userExists) {
-      return res.status(400).json({ error: "Email already registered." });
-    }
-
-    // Create password hash
-    const salt = bcrypt.genSaltSync(10);
-    const passwordHash = bcrypt.hashSync(password, salt);
-
-    // Create user
-    const user = new User({
-      name,
-      email,
-      password: passwordHash,
-    });
-
-    try {
-      const userToSave = await user.save();
-      res.status(200).json({
-        _id: userToSave._id,
-        name: userToSave.name,
-        email: userToSave.email,
-        created: userToSave.created,
-        updated: userToSave.updated,
-      });
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  }
+  // }
 
   static async authenticate(req, res) {
     // Get email and password
@@ -94,6 +57,7 @@ class AuthController {
       id: user._id,
       name: user.name,
       email: user.email,
+      permission: user.permission,
       created: user.created,
       updated: user.updated,
       token,
