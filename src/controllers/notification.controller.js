@@ -33,7 +33,7 @@ class NotificationController {
           // Find the package by id and update it if exists, otherwise insert a new package
           await Package.findOneAndUpdate(
             { _id: packageId }, // Filter to find the package by id
-            { $set: { ...data, user_email: account.email } }, // Update the package with the new data
+            { $set: { ...data, organization_id: account.organization_id } }, // Update the package with the new data
             { upsert: true, new: true } // Create the package if it doesn't exist (upsert)
           );
 
@@ -45,6 +45,7 @@ class NotificationController {
             const label = new Label({
               packageId,
               label: labelContent,
+              organization_id: account.organization_id,
             });
             await label.save();
           }

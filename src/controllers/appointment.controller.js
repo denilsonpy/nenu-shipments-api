@@ -2,37 +2,31 @@ import Appointment from "../models/appointment.model.js";
 
 class AppointmentController {
   static async getAll(req, res) {
-    const email = req.user;
-
+    const user = req.user;
     const appointments = await Appointment.find({
-      user_email: email,
+      organization_id: user.organization,
     });
-
     return res.json({ appointments });
   }
 
   static async create(req, res) {
-    const email = req.user;
-    const operator = req?.body?.operator;
-    const shipments = req?.body?.shipments;
-
+    const user = req.user;
+    const { operator, shipments } = req?.body;
     const appointment = await Appointment.create({
-      user_email: email,
+      organization_id: user.organization,
       operator,
       shipments,
     });
     await appointment.save();
-
     return res.sendStatus(201);
   }
 
   static async delete(req, res) {
-    const email = req.user;
+    const user = req.user;
     const appointmentId = req?.params.id;
-
     await Appointment.deleteOne({
       _id: appointmentId,
-      user_email: email,
+      organization_id: user.organization,
     });
 
     return res.sendStatus(200);

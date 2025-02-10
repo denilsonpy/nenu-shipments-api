@@ -11,9 +11,14 @@ const userSchema = new mongoose.Schema({
   password: {
     required: true,
     type: String,
-    minLength: 8,
     select: false,
   },
+  permission: {
+    type: String,
+    enum: ["read", "write", "admin"],
+    required: true,
+  },
+  organization: { type: mongoose.Schema.Types.ObjectId, ref: "Organization" },
   created: { type: Date, default: Date.now },
   updated: { type: Date, default: Date.now },
 });

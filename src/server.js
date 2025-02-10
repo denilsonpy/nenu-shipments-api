@@ -14,6 +14,8 @@ import carrierRouter from "./routes/carrier.router.js";
 import notificationRouter from "./routes/notification.router.js";
 import appointmentRouter from "./routes/appointment.router.js";
 import packageRouter from "./routes/package.router.js";
+import labelRouter from "./routes/labels.router.js";
+import userRouter from "./routes/user.router.js";
 
 // Connection with database
 mongoose.connect(config.mongoUri || "");
@@ -37,9 +39,11 @@ app.use("/auth", authRouter);
 app.use("/notifications", notificationRouter);
 app.use("/accounts", authenticated, accountRouter);
 app.use("/shipments", authenticated, refreshAccountToken, shipmentRouter);
+app.use("/labels", authenticated, refreshAccountToken, labelRouter);
 app.use("/packages", authenticated, refreshAccountToken, packageRouter);
 app.use("/appointments", authenticated, refreshAccountToken, appointmentRouter);
 app.use("/carriers", authenticated, carrierRouter);
+app.use("/users", authenticated, userRouter);
 
 // Handle other endpoints or invalid requests
 app.use((req, res) => {
