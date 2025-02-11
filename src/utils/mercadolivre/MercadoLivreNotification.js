@@ -18,6 +18,7 @@ export class MercadoLivreNotificationAPI {
           resolve(response.data);
         })
         .catch((error) => {
+          console.log(error);
           reject("Failed to get resource in Mercado Livre API");
         });
     });
