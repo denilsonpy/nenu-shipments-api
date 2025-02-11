@@ -3,6 +3,7 @@ import Account from "../models/account.model.js";
 import Label from "../models/label.model.js";
 import Package from "../models/package.model.js";
 import { sendEmail, sendMail } from "../utils/mail.js";
+import { MercadoLivreAccountAPI } from "../utils/mercadolivre/MercadoLivreAccount.js";
 import { MercadoLivreNotificationAPI } from "../utils/mercadolivre/MercadoLivreNotification.js";
 import { MercadoLivreShippingAPI } from "../utils/mercadolivre/MercadoLivreShipping.js";
 
@@ -17,12 +18,31 @@ class NotificationController {
             seller_id: user_id,
           });
 
+          let token = "";
+          const isTokenExpired = isExpired(account.updated, account.expires_in);
+          if (isTokenExpired) {
+            const mercadoLivreAccountAPI = new MercadoLivreAccountAPI();
+            const newToken = await mercadoLivreAccountAPI.refresh(
+              account.refresh_token
+            );
+            await Account.updateOne(
+              {
+                _id: account._id,
+              },
+              {
+                access_token: newToken.access_token,
+                refresh_token: newToken.refresh_token,
+                expires_in: newToken.expires_in,
+                updated: new Date(),
+              }
+            );
+            token = newToken;
+          }
+
           const mercadoLivreNotificationAPI = new MercadoLivreNotificationAPI(
-            account.access_token
+            token
           );
-          const mercadoLivreShippingAPI = new MercadoLivreShippingAPI(
-            account.access_token
-          );
+          const mercadoLivreShippingAPI = new MercadoLivreShippingAPI(token);
 
           const data = await mercadoLivreNotificationAPI.getByResource(
             resource
