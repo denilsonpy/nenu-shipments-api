@@ -10,37 +10,64 @@ import Package from "../models/package.model.js";
 
 class ShippingController {
   static async getById(req, res) {
-    try {
-      const user = req.user;
-      const { id } = req.params;
+    // try {
+    const user = req.user;
+    const { id } = req.params;
 
-      const pack = await Package.findOne({
-        _id: id,
-        organization_id: user.organization,
-      });
-      const account = await Account.findOne({
-        seller_id: pack.sender_id,
-      });
+    // const pack = await Package.findOne({
+    //   _id: id,
+    //   organization_id: user.organization,
+    // });
+    const accounts = await Account.find({
+      organization_id: user.organization,
+    });
 
-      return res.json({
-        id: pack._id,
-        name: pack.receiver_address?.receiver_name,
-        state: pack.receiver_address?.state?.name,
-        city: pack.receiver_address?.city?.name,
-        district: pack.receiver_address?.neighborhood?.name,
-        street: pack.receiver_address?.street_name,
-        address: pack.receiver_address?.address_line,
-        complement: pack.receiver_address?.comment,
-        number: pack.receiver_address?.street_number,
-        cep: pack.receiver_address?.zip_code,
-        store: account.name,
-        url: `https://www.mercadolivre.com.br/vendas/${pack?.order_id}/detalhe`,
-        created: pack?.date_created,
-      });
-    } catch (error) {
-      console.log(error);
-      return res.sendStatus(500);
+    for (let account of accounts) {
+      const token = account.access_token;
+      const mercadolivreShippingApi = new MercadoLivreShippingAPI(token);
+      try {
+        const shippingExists = await mercadolivreShippingApi.getByID(id);
+        const receiver = shippingExists?.receiver_address;
+        return res.json({
+          id: shippingExists.id,
+          // cpf_cnpj: shippingExists.,
+          name: receiver?.receiver_name,
+          state: receiver?.state?.name,
+          city: receiver?.city?.name,
+          district: receiver?.neighborhood?.name,
+          street: receiver?.street_name,
+          address: receiver?.address_line,
+          complement: receiver?.comment,
+          number: receiver?.street_number,
+          cep: receiver?.zip_code,
+          store: account.name,
+          url: `https://www.mercadolivre.com.br/vendas/${shippingExists?.order_id}/detalhe`,
+          created: shippingExists?.date_created,
+        });
+      } catch (error) {
+        console.log(error);
+        continue;
+      }
     }
+    //   return res.json({
+    //     id: pack._id,
+    //     name: pack.receiver_address?.receiver_name,
+    //     state: pack.receiver_address?.state?.name,
+    //     city: pack.receiver_address?.city?.name,
+    //     district: pack.receiver_address?.neighborhood?.name,
+    //     street: pack.receiver_address?.street_name,
+    //     address: pack.receiver_address?.address_line,
+    //     complement: pack.receiver_address?.comment,
+    //     number: pack.receiver_address?.street_number,
+    //     cep: pack.receiver_address?.zip_code,
+    //     store: account.name,
+    //     url: `https://www.mercadolivre.com.br/vendas/${pack?.order_id}/detalhe`,
+    //     created: pack?.date_created,
+    //   });
+    // } catch (error) {
+    //   console.log(error);
+    //   return res.sendStatus(500);
+    // }
   }
 
   static async create(req, res) {
