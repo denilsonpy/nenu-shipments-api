@@ -19,7 +19,7 @@ class NotificationController {
             seller_id: user_id,
           });
 
-          let token = "";
+          let token = account.access_token;
           const isTokenExpired = isExpired(account.updated, account.expires_in);
           if (isTokenExpired) {
             const mercadoLivreAccountAPI = new MercadoLivreAccountAPI();
