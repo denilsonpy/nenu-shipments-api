@@ -37,7 +37,7 @@ class NotificationController {
                 updated: new Date(),
               }
             );
-            token = newToken;
+            token = newToken.access_token;
           }
 
           const mercadoLivreNotificationAPI = new MercadoLivreNotificationAPI(
