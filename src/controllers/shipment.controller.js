@@ -218,8 +218,19 @@ class ShippingController {
     }
 
     const shipments = await Shipment.find(query);
+    const packageIds = shipments.map(s => s.id);
+    const packages = await Package.find({ _id: { $in: packageIds } });
 
-    return res.json({ shipments });
+    const packageMap = new Map(packages.map(p => [p._id.toString(), { status: p.status, substatus: p.substatus }]));
+
+    const mergedShipments = shipments.map(s => ({
+      ...s.toObject(),
+      status: packageMap.get(s.id.toString())?.status || null,
+      sub_status: packageMap.get(s.id.toString())?.substatus || null,
+    }));
+
+
+    return res.json({ shipments: mergedShipments });
   }
 }
 
