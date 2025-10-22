@@ -218,19 +218,47 @@ class ShippingController {
     }
 
     const shipments = await Shipment.find(query);
-    const packageIds = shipments.map(s => s.id);
+    const packageIds = shipments.map((s) => s.id);
     const packages = await Package.find({ _id: { $in: packageIds } });
 
-    const packageMap = new Map(packages.map(p => [p._id.toString(), { status: p.status, substatus: p.substatus }]));
+    const packageMap = new Map(
+      packages.map((p) => [
+        p._id.toString(),
+        { status: p.status, substatus: p.substatus },
+      ])
+    );
 
-    const mergedShipments = shipments.map(s => ({
+    const mergedShipments = shipments.map((s) => ({
       ...s.toObject(),
       status: packageMap.get(s.id.toString())?.status || null,
       sub_status: packageMap.get(s.id.toString())?.substatus || null,
     }));
 
-
     return res.json({ shipments: mergedShipments });
+  }
+
+  static async deleteShipment(req, res) {
+    try {
+      const user = req.user;
+      const { id } = req.params;
+
+      const shipment = await Shipment.findOneAndDelete({
+        _id: id,
+        organization_id: user.organization,
+      });
+
+      if (!shipment) {
+        return res.status(404).json({ error: "Envio não encontrado." });
+      }
+
+      return res.json({
+        success: true,
+        message: "Envio excluído com sucesso.",
+      });
+    } catch (error) {
+      console.error("❌ Erro ao excluir envio:", error);
+      return res.status(500).json({ error: "Erro interno ao excluir envio." });
+    }
   }
 }
 

@@ -19,5 +19,10 @@ shipmentRouter.post(
   permission(["write", "admin"]),
   ShipmentController.create
 );
+shipmentRouter.delete(
+  "/:id",
+  permission(["admin"]),
+  ShipmentController.deleteShipment
+);
 
 export default shipmentRouter;
