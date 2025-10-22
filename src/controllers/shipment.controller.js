@@ -178,6 +178,7 @@ class ShippingController {
 
     const query = {
       organization_id: { $in: [user.organization] },
+      is_deleted: false,
     };
 
     // Add filters based on the presence of query parameters
@@ -242,18 +243,33 @@ class ShippingController {
       const user = req.user;
       const { id } = req.params;
 
-      const shipment = await Shipment.findOneAndDelete({
-        _id: id,
-        organization_id: user.organization,
-      });
+      // Mark the shipment as deleted instead of removing it
+      const shipment = await Shipment.findOneAndUpdate(
+        {
+          _id: id,
+          organization_id: user.organization,
+          is_deleted: false, // only delete if not already deleted
+          deleted_by: user.email,
+        },
+        {
+          $set: {
+            is_deleted: true,
+            updated: new Date(), // if using custom timestamp names
+          },
+        },
+        { new: true } // return updated doc
+      );
 
       if (!shipment) {
-        return res.status(404).json({ error: "Envio não encontrado." });
+        return res
+          .status(404)
+          .json({ error: "Envio não encontrado ou já excluído." });
       }
 
       return res.json({
         success: true,
-        message: "Envio excluído com sucesso.",
+        message: "Envio marcado como excluído com sucesso.",
+        shipment,
       });
     } catch (error) {
       console.error("❌ Erro ao excluir envio:", error);
