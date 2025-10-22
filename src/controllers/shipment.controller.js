@@ -243,18 +243,18 @@ class ShippingController {
       const user = req.user;
       const { id } = req.params;
 
-      // Mark the shipment as deleted instead of removing it
+      // SOFT DELETE
       const shipment = await Shipment.findOneAndUpdate(
         {
           _id: id,
           organization_id: user.organization,
-          is_deleted: false, // only delete if not already deleted
-          deleted_by: user.email,
+          is_deleted: false,
         },
         {
           $set: {
             is_deleted: true,
-            updated: new Date(), // if using custom timestamp names
+            deleted_by: user.email,
+            updated: new Date(),
           },
         },
         { new: true } // return updated doc
